@@ -1,4 +1,4 @@
-# Jarvis Control Center
+# Bubloo Control Center
 
 A voice-first AI operating system. Talk naturally with Jarvis — it connects to your real services (Gmail, Google Calendar, Notion), performs actions, remembers context, and continuously updates a live dashboard while it works. Full-duplex conversation with natural interruption, synchronized across every open window.
 
