@@ -102,7 +102,7 @@ export function LeftPanel() {
             </div>
           </div>
         ) : (
-          <Empty text="Ask Jarvis to check your inbox" />
+          <Empty text="Ask Bubloo to check your inbox" />
         )}
       </GlassCard>
 
@@ -219,7 +219,7 @@ export function LeftPanel() {
             </p>
           </div>
         ) : (
-          <Empty text="Ask Jarvis to search your notes" />
+          <Empty text="Ask Bubloo to search your notes" />
         )}
       </GlassCard>
 
@@ -238,6 +238,7 @@ export function LeftPanel() {
 
 function ServiceRow({ connection: c }: { connection: any }) {
   const checkConnection = useAction(api.composio.checkConnection);
+  const initiateConnection = useAction(api.composio.initiateConnection);
   const statusColor =
     c.status === "connected"
       ? "bg-emerald-400"
@@ -247,6 +248,18 @@ function ServiceRow({ connection: c }: { connection: any }) {
           ? "bg-red-400"
           : "bg-white/20";
 
+  const handleConnect = async () => {
+    try {
+      const res = await initiateConnection({ toolkit: c.toolkit });
+      if (res.ok && res.redirectUrl) {
+        window.open(res.redirectUrl, "jarvis-auth", "width=560,height=720");
+        setTimeout(() => void checkConnection({ toolkit: c.toolkit }).catch(() => {}), 4000);
+      }
+    } catch (e) {
+      console.error("Connect failed:", e);
+    }
+  };
+
   return (
     <div className="flex items-center gap-2.5">
       <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${statusColor}`} />
@@ -254,6 +267,14 @@ function ServiceRow({ connection: c }: { connection: any }) {
       <span className="mono ml-auto text-[9.5px] tracking-wider text-white/30 uppercase">
         {c.status === "pending_auth" ? "awaiting auth" : c.status}
       </span>
+      {c.status === "available" && (
+        <button
+          onClick={handleConnect}
+          className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-cyan-300 transition hover:bg-cyan-500/20 hover:border-cyan-400/40"
+        >
+          Connect
+        </button>
+      )}
       {c.status === "pending_auth" && c.authUrl && (
         <button
           onClick={() => {

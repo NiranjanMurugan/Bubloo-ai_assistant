@@ -6,14 +6,35 @@ import { useAction, useMutation, useQuery } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "../../convex/_generated/api";
 import { useRealtimeSession } from "@/hooks/useRealtimeSession";
+import { useGeminiSession } from "@/hooks/useGeminiSession";
 import { ORB_STATE_HUES, OrbState } from "@/lib/types";
-import { JarvisOrb } from "./orb/JarvisOrb";
+import { BublooOrb } from "./orb/BublooOrb";
 import { Transcript } from "./Transcript";
 import { LeftPanel } from "./panels/LeftPanel";
 import { RightPanel } from "./panels/RightPanel";
 
-export function JarvisApp() {
-  const session = useRealtimeSession();
+export function BublooApp() {
+  const [provider, setProviderState] = useState<"gemini" | "openai">("gemini");
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [geminiKeyInput, setGeminiKeyInput] = useState("");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("bubloo_provider") || localStorage.getItem("jarvis_provider") as "gemini" | "openai" | null;
+    if (saved && (saved === "gemini" || saved === "openai")) setProviderState(saved);
+    const savedKey = localStorage.getItem("bubloo_gemini_api_key") || localStorage.getItem("jarvis_gemini_api_key") || "";
+    setGeminiKeyInput(savedKey);
+  }, []);
+
+  const setProvider = (p: "gemini" | "openai") => {
+    setProviderState(p);
+    localStorage.setItem("bubloo_provider", p);
+  };
+
+  const openAiSession = useRealtimeSession();
+  const geminiSession = useGeminiSession();
+
+  const session = provider === "gemini" ? geminiSession : openAiSession;
+
   const seed = useMutation(api.init.seed);
   const syncConnections = useAction(api.composio.syncConnections);
   const checkConnection = useAction(api.composio.checkConnection);
@@ -37,8 +58,6 @@ export function JarvisApp() {
     return () => clearInterval(id);
   }, []);
 
-  // This tab hosts the live session, or mirrors another tab's session.
-  // A mirror only trusts sessionActive if the host heartbeat is fresh.
   const heartbeatFresh =
     !!voiceState?.sessionActive && Date.now() - voiceState.updatedAt < 25000;
   const mirroring = !session.active && heartbeatFresh;
@@ -57,7 +76,7 @@ export function JarvisApp() {
     );
   }, [displayState]);
 
-  // Poll pending OAuth connections; the host tab notifies Jarvis on success.
+  // Poll pending OAuth connections; the host tab notifies Bubloo on success.
   const pendingToolkits = useMemo(
     () =>
       connections
@@ -89,7 +108,6 @@ export function JarvisApp() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingToolkits, session.active]);
 
-  // Mirror tabs synthesize a plausible audio level so the orb still feels alive.
   const getLevel = () => {
     if (session.active) return session.getLevel();
     if (mirroring && (displayState === "speaking" || displayState === "listening")) {
@@ -99,16 +117,30 @@ export function JarvisApp() {
     return 0;
   };
 
+  const saveGeminiKey = (key: string) => {
+    setGeminiKeyInput(key);
+    localStorage.setItem("bubloo_gemini_api_key", key);
+    localStorage.setItem("jarvis_gemini_api_key", key);
+    setShowApiKeyModal(false);
+  };
+
   return (
     <div className="relative h-screen w-screen overflow-hidden">
       <div className="relative z-10 flex h-full flex-col">
-        <Header sessionAlive={sessionAlive} mirroring={mirroring} error={session.error} />
+        <Header
+          sessionAlive={sessionAlive}
+          mirroring={mirroring}
+          error={session.error}
+          provider={provider}
+          setProvider={setProvider}
+          onOpenKeyModal={() => setShowApiKeyModal(true)}
+        />
 
         <div className="grid min-h-0 flex-1 grid-cols-[300px_1fr_320px] gap-4 px-4 pb-4 xl:grid-cols-[330px_1fr_360px] xl:gap-5 xl:px-5 xl:pb-5">
           <LeftPanel />
 
           <main className="glass flex min-h-0 flex-col items-center rounded-2xl px-6 pt-2">
-            <JarvisOrb
+            <BublooOrb
               state={displayState}
               getLevel={getLevel}
               active={sessionAlive}
@@ -122,12 +154,71 @@ export function JarvisApp() {
                 Session active in another window
               </p>
             )}
-            <Transcript />
+            <Transcript
+              onSendText={(text) => {
+                if (provider === "gemini") {
+                  void geminiSession.sendQuery(text);
+                }
+              }}
+              onMicClick={() => {
+                if (provider === "gemini") {
+                  if (!geminiSession.active) {
+                    void geminiSession.activate();
+                  } else {
+                    geminiSession.startListening();
+                  }
+                }
+              }}
+              isListening={
+                provider === "gemini" &&
+                geminiSession.active &&
+                geminiSession.orbState === "listening"
+              }
+              interimText={
+                provider === "gemini" ? geminiSession.interimText : undefined
+              }
+            />
           </main>
 
           <RightPanel />
         </div>
       </div>
+
+      {showApiKeyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="glass w-[420px] rounded-2xl p-6 shadow-2xl">
+            <h3 className="text-[14px] font-semibold tracking-wider text-white">
+              Google Gemini API Key
+            </h3>
+            <p className="mt-1 text-[12px] text-white/50">
+              Enter your Gemini API key (from Google AI Studio) or leave blank if set in <code className="text-cyan-300">.env.local</code>.
+            </p>
+
+            <input
+              type="password"
+              value={geminiKeyInput}
+              onChange={(e) => setGeminiKeyInput(e.target.value)}
+              placeholder="Paste Gemini API key or leave blank to use .env.local..."
+              className="mono mt-4 w-full rounded-lg border border-white/15 bg-white/[0.05] px-3 py-2 text-[13px] text-white outline-none focus:border-cyan-400"
+            />
+
+            <div className="mt-5 flex justify-end gap-3">
+              <button
+                onClick={() => setShowApiKeyModal(false)}
+                className="rounded border border-white/10 px-3 py-1.5 text-[12px] text-white/50 hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => saveGeminiKey(geminiKeyInput)}
+                className="rounded border border-cyan-400/40 bg-cyan-500/20 px-4 py-1.5 text-[12px] font-medium text-cyan-200 hover:bg-cyan-500/30"
+              >
+                Save Key
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -136,10 +227,16 @@ function Header({
   sessionAlive,
   mirroring,
   error,
+  provider,
+  setProvider,
+  onOpenKeyModal,
 }: {
   sessionAlive: boolean;
   mirroring: boolean;
   error: string | null;
+  provider: "gemini" | "openai";
+  setProvider: (p: "gemini" | "openai") => void;
+  onOpenKeyModal: () => void;
 }) {
   const { signOut } = useAuthActions();
   const user = useQuery(api.auth.me);
@@ -148,13 +245,48 @@ function Header({
     <header className="flex items-center justify-between px-6 py-4 xl:px-7">
       <div className="flex items-baseline gap-3">
         <h1 className="text-[15px] font-semibold tracking-[0.42em] text-white/90">
-          J A R V I S
+          B U B L O O
         </h1>
         <span className="label-xs">Control Center</span>
       </div>
+
       <div className="flex items-center gap-4">
+        {/* Engine Switcher */}
+        <div className="flex items-center gap-1 rounded-lg border border-white/10 bg-white/[0.04] p-1">
+          <button
+            onClick={() => setProvider("gemini")}
+            className={`mono flex items-center gap-1.5 rounded px-2.5 py-1 text-[10px] tracking-wider uppercase transition ${
+              provider === "gemini"
+                ? "bg-cyan-400/20 text-cyan-200 border border-cyan-300/30"
+                : "text-white/40 hover:text-white/70"
+            }`}
+          >
+            ✦ Gemini
+          </button>
+          <button
+            onClick={() => setProvider("openai")}
+            className={`mono rounded px-2.5 py-1 text-[10px] tracking-wider uppercase transition ${
+              provider === "openai"
+                ? "bg-purple-400/20 text-purple-200 border border-purple-300/30"
+                : "text-white/40 hover:text-white/70"
+            }`}
+          >
+            OpenAI
+          </button>
+        </div>
+
+        {provider === "gemini" && (
+          <button
+            onClick={onOpenKeyModal}
+            className="mono rounded border border-white/10 px-2 py-1 text-[9.5px] text-white/40 uppercase hover:border-cyan-300/40 hover:text-cyan-200"
+            title="Configure Gemini API Key"
+          >
+            ⚙ Key
+          </button>
+        )}
+
         {error && (
-          <span className="mono max-w-[420px] truncate text-[11px] text-red-300/80">
+          <span className="mono max-w-[320px] truncate text-[11px] text-red-300/80" title={error}>
             {error}
           </span>
         )}
@@ -226,3 +358,6 @@ function Clock() {
     </span>
   );
 }
+
+// Backwards compatibility alias
+export const JarvisApp = BublooApp;

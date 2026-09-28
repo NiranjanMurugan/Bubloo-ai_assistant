@@ -1,7 +1,7 @@
 "use client";
 
 import { Authenticated, Unauthenticated, AuthLoading } from "convex/react";
-import { JarvisApp } from "./JarvisApp";
+import { BublooApp } from "./BublooApp";
 import { SignIn } from "./SignIn";
 
 export function AuthGate() {
@@ -24,7 +24,7 @@ export function AuthGate() {
       </Unauthenticated>
 
       <Authenticated>
-        <JarvisApp />
+        <BublooApp />
       </Authenticated>
     </>
   );

@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Jarvis Control Center",
+  title: "Bubloo Control Center",
   description: "A voice-first AI operating system",
 };
 

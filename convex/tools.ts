@@ -331,7 +331,7 @@ export const execute = action({
             dangerouslySkipVersionCheck: true,
             arguments: {
               summary: args.summary ?? "New event",
-              description: args.description ?? "Created by Jarvis",
+              description: args.description ?? "Created by Bubloo",
               start_datetime: args.start_datetime,
               event_duration_hour: Math.floor(durationMinutes / 60),
               event_duration_minutes: durationMinutes % 60,
@@ -429,6 +429,28 @@ export const execute = action({
           });
         }
 
+        /* ---------------- composio universal execution ---------------- */
+        case "execute_composio_action": {
+          const actionSlug = String(args.action ?? "").toUpperCase();
+          const actionArgs = args.arguments ?? {};
+          if (!actionSlug) {
+            return { error: "missing_action", message: "Action slug is required (e.g. 'GITHUB_CREATE_AN_ISSUE', 'SLACK_SEND_MESSAGE')." };
+          }
+          await setObjective(`Executing ${actionSlug}`);
+          await log("executing", "Executing Composio Action", actionSlug);
+          const composio = getComposio();
+          const result = await composio.tools.execute(actionSlug, {
+            userId: String(userId),
+            dangerouslySkipVersionCheck: true,
+            arguments: actionArgs,
+          });
+          if (!result.successful) return { error: "tool_failed", message: result.error };
+          return finish({
+            ok: true,
+            data: result.data,
+          });
+        }
+
         /* ---------------- briefing ---------------- */
         case "prepare_daily_briefing": {
           const briefing: any = await ctx.runAction(api.briefing.run, {});
@@ -461,10 +483,17 @@ function parseDueDate(input: unknown): number | undefined {
 }
 
 function resolveServiceSlug(input: string): string | null {
-  const s = input.toLowerCase();
+  const s = input.toLowerCase().trim();
   if (s.includes("gmail") || s.includes("mail") || s.includes("email")) return "gmail";
   if (s.includes("calendar")) return "googlecalendar";
   if (s.includes("notion") || s.includes("note")) return "notion";
+  if (s.includes("github") || s.includes("git")) return "github";
+  if (s.includes("slack")) return "slack";
+  if (s.includes("drive") || s.includes("googledrive")) return "googledrive";
+  if (s.includes("trello")) return "trello";
+  if (s.includes("jira")) return "jira";
+  if (s.includes("discord")) return "discord";
+  if (s.includes("twitter") || s.includes("tweet") || s === "x") return "twitter";
   if (SERVICES[s]) return s;
   return null;
 }

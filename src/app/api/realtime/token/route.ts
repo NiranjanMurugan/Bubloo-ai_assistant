@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
-import { JARVIS_INSTRUCTIONS, JARVIS_TOOLS } from "@/lib/jarvisTools";
+import { BUBLOO_INSTRUCTIONS, BUBLOO_TOOLS } from "@/lib/bublooTools";
 import { api } from "../../../../../convex/_generated/api";
 
 /**
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Verify the caller is an authenticated Jarvis user.
+  // Verify the caller is an authenticated Bubloo user.
   const authHeader = request.headers.get("authorization");
   const jwt = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
   if (!jwt) {
@@ -59,10 +59,10 @@ export async function POST(request: NextRequest) {
       type: "realtime",
       model: "gpt-realtime",
       instructions:
-        JARVIS_INSTRUCTIONS +
+        BUBLOO_INSTRUCTIONS +
         profileSection +
         `\n\nCurrent date and time: ${now.toString()}. Use this to resolve relative dates.`,
-      tools: JARVIS_TOOLS,
+      tools: BUBLOO_TOOLS,
       audio: {
         input: {
           transcription: { model: "gpt-4o-mini-transcribe" },

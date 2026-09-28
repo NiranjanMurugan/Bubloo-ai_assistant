@@ -171,7 +171,7 @@ export function ProfilePage() {
                   {form.displayName || "Unnamed operator"}
                 </p>
                 <p className="mt-0.5 text-[11.5px] text-white/35">
-                  These details are shared with Jarvis — it will address you properly, adapt its
+                  These details are shared with Bubloo — it will address you properly, adapt its
                   tone, and sign your emails.
                 </p>
               </div>
@@ -232,7 +232,7 @@ export function ProfilePage() {
 
               <div>
                 <label className="label-xs mb-1.5 block">
-                  Anything else Jarvis should know
+                  Anything else Bubloo should know
                 </label>
                 <textarea
                   value={form.notes}
@@ -257,7 +257,7 @@ export function ProfilePage() {
                     animate={{ opacity: 1, x: 0 }}
                     className="mono flex items-center gap-1.5 text-[11px] text-emerald-300/80"
                   >
-                    <Check className="h-3.5 w-3.5" /> Synced to Jarvis
+                    <Check className="h-3.5 w-3.5" /> Synced to Bubloo
                   </motion.span>
                 )}
               </div>
@@ -265,7 +265,7 @@ export function ProfilePage() {
           </div>
 
           <p className="mt-4 px-1 text-center text-[11px] text-white/25">
-            Restart the voice session after saving so Jarvis picks up the changes.
+            Restart the voice session after saving so Bubloo picks up the changes.
           </p>
         </motion.div>
       </div>

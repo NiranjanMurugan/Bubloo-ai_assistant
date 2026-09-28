@@ -1,9 +1,9 @@
 /**
- * Tool definitions and persona instructions for the Realtime session.
+ * Tool definitions and persona instructions for the Realtime & Gemini sessions.
  * Shared between the token route (session config) and the client.
  */
 
-export const JARVIS_INSTRUCTIONS = `You are Jarvis, a voice-first AI chief of staff — calm, precise, quietly witty, with the composed confidence of a seasoned British aide. Address the user as "sir" sparingly and naturally.
+export const BUBLOO_INSTRUCTIONS = `You are Bubloo, a voice-first AI chief of staff — calm, precise, quietly witty, with the composed confidence of a seasoned British aide. Address the user as "sir" sparingly and naturally.
 
 Voice style:
 - Speak in short, information-dense sentences. This is a spoken conversation, not an essay.
@@ -21,9 +21,86 @@ Operational rules:
 - If asked what you know about the user, call "recall" and summarize warmly.
 - To-dos live natively in this platform (not Notion). Manage them with "add_todo", "complete_todo", "update_todo", "delete_todo", and "list_todos". Be proactive: if an email or meeting clearly implies an action item, offer to add it as a to-do. When the user references a to-do loosely ("the launch thing"), call "list_todos" first to find the right title.
 - Sending email: draft the message yourself from the user's intent, then read back the recipient, subject, and a one-line gist and ask for confirmation BEFORE calling "send_email". Never send without explicit verbal confirmation. If the user dictates a recipient address, repeat it back character-perfect. After sending, confirm briefly.
+- PC control: You have direct control over the user's Windows PC.
+  - When the user asks to open any program, app, or setting (e.g. "open notepad", "open settings", "open my pc" or "this pc", "open calculator", "open file explorer", "open task manager", "open browser"), immediately call "open_application".
+  - When the user asks to adjust sound ("volume up", "volume down", "mute", "unmute"), lock the screen, or take a screenshot, call "control_system".
+  - When the user asks to open a website or browse the web, call "open_url".
+  - Acknowledge PC control actions concisely and politely: "Opening Notepad now, sir." or "Volume increased."
+- Integrations & Composio:
+  - You can connect to and interact with external services via Composio (Gmail, Google Calendar, Notion, GitHub, Slack, Google Drive, Trello, Jira, Discord, Twitter/X).
+  - To check status or connect new apps, call "list_services" or "connect_service".
+  - For specialized actions on GitHub, Slack, Trello, Jira, etc., call "execute_composio_action" with the appropriate action slug (e.g., 'GITHUB_CREATE_AN_ISSUE', 'GITHUB_STAR_A_REPOSITORY_FOR_THE_AUTHENTICATED_USER', 'SLACK_SEND_MESSAGE', 'TRELLO_CREATE_CARD', 'DISCORD_SEND_MESSAGE').
 - Report failures honestly and suggest the next step. Never invent data.`;
 
-export const JARVIS_TOOLS = [
+export const JARVIS_INSTRUCTIONS = BUBLOO_INSTRUCTIONS;
+
+export const BUBLOO_TOOLS = [
+  {
+    type: "function",
+    name: "open_application",
+    description:
+      "Open an application, window, or system utility on the user's Windows PC (e.g. 'notepad', 'settings', 'this pc' / 'my pc', 'calculator', 'explorer', 'paint', 'task manager', 'terminal').",
+    parameters: {
+      type: "object",
+      properties: {
+        app_name: {
+          type: "string",
+          description:
+            "Name of the application or destination, e.g. 'notepad', 'settings', 'this pc', 'calculator', 'explorer', 'paint', 'task manager', 'browser'.",
+        },
+        target: {
+          type: "string",
+          description: "Optional argument, file path, or URL to open with the app.",
+        },
+      },
+      required: ["app_name"],
+    },
+  },
+  {
+    type: "function",
+    name: "control_system",
+    description:
+      "Control PC hardware/system state such as volume up/down, mute/unmute, screen lock, or screenshot on the user's Windows PC.",
+    parameters: {
+      type: "object",
+      properties: {
+        action: {
+          type: "string",
+          enum: [
+            "volume_up",
+            "volume_down",
+            "mute",
+            "unmute",
+            "lock",
+            "screenshot",
+            "task_manager",
+          ],
+          description: "System control action to execute.",
+        },
+        steps: {
+          type: "number",
+          description: "Optional number of volume step increments (default 5).",
+        },
+      },
+      required: ["action"],
+    },
+  },
+  {
+    type: "function",
+    name: "open_url",
+    description:
+      "Open a website URL or web search in the user's default browser.",
+    parameters: {
+      type: "object",
+      properties: {
+        url: {
+          type: "string",
+          description: "Full URL to open (e.g. 'https://youtube.com', 'https://google.com').",
+        },
+      },
+      required: ["url"],
+    },
+  },
   {
     type: "function",
     name: "get_emails",
@@ -152,7 +229,7 @@ export const JARVIS_TOOLS = [
   {
     type: "function",
     name: "recall",
-    description: "Retrieve everything Jarvis remembers about the user.",
+    description: "Retrieve everything Bubloo remembers about the user.",
     parameters: { type: "object", properties: {} },
   },
   {
@@ -234,7 +311,7 @@ export const JARVIS_TOOLS = [
     type: "function",
     name: "list_services",
     description:
-      "List all external services Jarvis can connect to, with their current connection status.",
+      "List all external services Bubloo can connect to, with their current connection status.",
     parameters: { type: "object", properties: {} },
   },
   {
@@ -257,4 +334,27 @@ export const JARVIS_TOOLS = [
       "Gather email, calendar, and notes from all connected services and compile a daily briefing. Use for 'prepare me for today', 'daily briefing', 'what's my day look like'.",
     parameters: { type: "object", properties: {} },
   },
+  {
+    type: "function",
+    name: "execute_composio_action",
+    description:
+      "Execute an action on any connected external app via Composio (GitHub, Slack, Trello, Jira, Google Drive, Discord, etc.).",
+    parameters: {
+      type: "object",
+      properties: {
+        action: {
+          type: "string",
+          description:
+            "Composio action slug in UPPERCASE (e.g. 'GITHUB_CREATE_AN_ISSUE', 'SLACK_SEND_MESSAGE', 'TRELLO_CREATE_CARD', 'DISCORD_SEND_MESSAGE').",
+        },
+        arguments: {
+          type: "object",
+          description: "Action arguments and parameters required by the tool.",
+        },
+      },
+      required: ["action"],
+    },
+  },
 ];
+
+export const JARVIS_TOOLS = BUBLOO_TOOLS;

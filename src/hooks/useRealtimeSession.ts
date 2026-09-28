@@ -361,7 +361,15 @@ export function useRealtimeSession(): RealtimeSession {
           "Content-Type": "application/sdp",
         },
       });
-      if (!sdpResponse.ok) throw new Error(`SDP exchange failed (${sdpResponse.status})`);
+      if (!sdpResponse.ok) {
+        const errorText = await sdpResponse.text();
+        console.error("OpenAI SDP exchange failed:", sdpResponse.status, errorText);
+        throw new Error(
+          sdpResponse.status === 429
+            ? "OpenAI Quota/Rate limit exceeded (429). Check your OpenAI credit balance or tier."
+            : `SDP exchange failed (${sdpResponse.status}): ${errorText}`
+        );
+      }
       await pc.setRemoteDescription({ type: "answer", sdp: await sdpResponse.text() });
 
       setActive(true);

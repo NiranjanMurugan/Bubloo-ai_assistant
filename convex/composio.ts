@@ -7,9 +7,16 @@ import { Composio } from "@composio/core";
 import { requireUser } from "./auth";
 
 export const SERVICES: Record<string, { name: string; description: string }> = {
-  gmail: { name: "Gmail", description: "Read and search email" },
-  googlecalendar: { name: "Google Calendar", description: "View and create events" },
-  notion: { name: "Notion", description: "Search notes and documents" },
+  gmail: { name: "Gmail", description: "Read, search, draft, and send emails" },
+  googlecalendar: { name: "Google Calendar", description: "View, schedule, and manage calendar events" },
+  notion: { name: "Notion", description: "Search, read, and create notes and documents" },
+  github: { name: "GitHub", description: "Manage repositories, issues, PRs, and commits" },
+  slack: { name: "Slack", description: "Send and read messages across Slack channels" },
+  googledrive: { name: "Google Drive", description: "Search, read, and manage Google Drive files" },
+  trello: { name: "Trello", description: "Manage boards, cards, and to-do lists" },
+  jira: { name: "Jira", description: "Track issues, tickets, and project sprints" },
+  discord: { name: "Discord", description: "Send announcements and messages to Discord channels" },
+  twitter: { name: "X (Twitter)", description: "Post updates and search tweets" },
 };
 
 export function getComposio() {

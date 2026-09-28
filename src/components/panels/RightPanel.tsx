@@ -80,7 +80,7 @@ export function RightPanel() {
         <div className="scroll-thin min-h-0 flex-1 space-y-3 overflow-y-auto">
           {facts.length === 0 && (
             <p className="text-[11.5px] text-white/25">
-              Nothing yet. Tell Jarvis something to remember.
+              Nothing yet. Tell Bubloo something to remember.
             </p>
           )}
           {[...grouped.entries()].map(([category, items]) => (

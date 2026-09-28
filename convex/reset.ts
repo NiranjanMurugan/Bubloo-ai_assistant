@@ -105,7 +105,7 @@ export const everything = mutation({
     await ctx.db.insert("timelineEvents", {
       userId,
       kind: "completed",
-      label: "Jarvis core online",
+      label: "Bubloo core online",
       detail: "All systems nominal",
       createdAt: now,
     });

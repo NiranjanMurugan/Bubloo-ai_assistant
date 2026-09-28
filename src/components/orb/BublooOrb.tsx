@@ -17,7 +17,7 @@ interface Props {
   connecting: boolean;
 }
 
-export function JarvisOrb({
+export function BublooOrb({
   state,
   getLevel,
   active,
@@ -79,7 +79,7 @@ export function JarvisOrb({
                   {connecting ? (
                     <span className="shimmer-text">Initializing…</span>
                   ) : (
-                    "Activate Jarvis"
+                    "Activate Bubloo"
                   )}
                 </span>
                 <span className="absolute inset-0 rounded-full border border-cyan-300/0 transition-all duration-500 group-hover:border-cyan-300/20 group-hover:scale-110" />
@@ -124,3 +124,6 @@ export function JarvisOrb({
     </div>
   );
 }
+
+// Backwards compatibility alias
+export const JarvisOrb = BublooOrb;
